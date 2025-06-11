@@ -27,16 +27,21 @@ func camelToSnake(s string) string {
 }
 
 func Fetch(ctx context.Context, pool *pgxpool.Pool,
-	model any, req querybuilder.ListRequest) ([]map[string]any, error) {
-
+	model any, req querybuilder.ListRequest) ([]map[string]any, int64, error) {
+	var count int64
 	ast, args, err := querybuilder.BuildAST(entity.LocationQueryBuilder{}, req)
-	sqlStr, _ := ast.Render()
+	sqlStr, countSqlStr, _ := ast.Render()
 
 	rows, err := pool.Query(ctx, sqlStr, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
+
+	err = pool.QueryRow(ctx, countSqlStr, args...).Scan(&count)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	cols := rows.FieldDescriptions()
 	formats := fieldFormats(model)
@@ -51,7 +56,7 @@ func Fetch(ctx context.Context, pool *pgxpool.Pool,
 	for rows.Next() {
 		vals, err := rows.Values()
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		rec := map[string]any{}
 		for i, fd := range cols {
@@ -111,7 +116,7 @@ func Fetch(ctx context.Context, pool *pgxpool.Pool,
 		}
 		out = append(out, rec)
 	}
-	return out, rows.Err()
+	return out, count, rows.Err()
 }
 
 func fieldFormats(model any) map[string]string {

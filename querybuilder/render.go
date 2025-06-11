@@ -1,12 +1,14 @@
 package querybuilder
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
 
-func (b Builder) Render() (string, []any) {
+func (b Builder) Render() (string, string, []any) {
 	var sql strings.Builder
+	var count strings.Builder
 	var args []any
 
 	sql.WriteString("SELECT ")
@@ -65,6 +67,7 @@ func (b Builder) Render() (string, []any) {
 	}
 	sql.WriteString(" OFFSET ")
 	sql.WriteString(strconv.Itoa(b.Offset))
+	count.WriteString(fmt.Sprintf("SELECT COUNT(*) FROM (%s)", sql.String()))
 
-	return sql.String(), args
+	return sql.String(), count.String(), args
 }

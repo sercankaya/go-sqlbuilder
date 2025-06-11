@@ -9,7 +9,7 @@ import (
 
 func MustPool(ctx context.Context) *pgxpool.Pool {
 
-	conn := "postgres://dbuser:password@localhost:5432/dbname?search_path=public&sslmode=disable"
+	conn := "postgres://user:password@localhost:5432/db?search_path=public&sslmode=disable"
 
 	if env := os.Getenv("PG_CONN"); env != "" {
 		conn = env
